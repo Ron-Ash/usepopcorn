@@ -86,15 +86,14 @@ function SearchStatistics({ movies }) {
   );
 }
 
-function SearchBar() {
-  const [query, setQuery] = useState("");
+function SearchBar({ query, setQueryF }) {
   return (
     <input
       className="search"
       type="text"
       placeholder="Search movies..."
       value={query}
-      onChange={(e) => setQuery(e.target.value)}
+      onChange={(e) => setQueryF(e.target.value)}
     />
   );
 }
@@ -103,42 +102,66 @@ function Loader() {
   return <p className="loader">Loading...</p>;
 }
 
+function ErrorMessage({ message }) {
+  return <p className="error">{message}</p>;
+}
+
 export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(tempWatchedData);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const query = "Barry";
-  useEffect(function () {
-    setIsLoading(true);
-    async function fetchMovies() {
-      const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-      );
-      const data = await res.json();
-      setMovies(data.Search ?? []);
-      setIsLoading(false);
-    }
-    fetchMovies();
-  }, []);
+  const [query, setQuery] = useState("interstellar");
+
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        setIsLoading(true);
+        setMovies([]);
+        setError(null);
+        try {
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+          );
+          if (!res.ok) {
+            console.log(res);
+            throw new Error("Something went wrong while fetching movies");
+          }
+
+          const data = await res.json();
+          if (data.Response === "False") throw new Error("Movie Not Found");
+          setMovies(data.Search ?? []);
+        } catch (err) {
+          console.log(err);
+          setError(err.message);
+        }
+        setIsLoading(false);
+      }
+      fetchMovies();
+    },
+    [query]
+  );
 
   return (
     <>
       <NavBar>
         <Logo />
-        <SearchBar />
+        <SearchBar query={query} setQueryF={setQuery} />
         <SearchStatistics movies={movies} />
       </NavBar>
       <Main>
         <Box
           itemList={
-            isLoading ? (
-              <Loader />
-            ) : (
-              movies?.map((movie) => (
-                <MovieReleaseCard key={movie.imdbID} movie={movie} />
-              ))
-            )
+            <>
+              {isLoading && <Loader />}
+              {error && <ErrorMessage message={error} />}
+              {!isLoading &&
+                !error &&
+                movies?.map((movie) => (
+                  <MovieReleaseCard key={movie.imdbID} movie={movie} />
+                ))}
+            </>
           }
         />
         <Box
