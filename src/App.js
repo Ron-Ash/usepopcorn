@@ -111,8 +111,26 @@ export default function App() {
   const [watched, setWatched] = useState(tempWatchedData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [query, setQuery] = useState("interstellar");
+  const [selectedId, setSelectedId] = useState(null);
+
+  function handleSelecteMovie(movie) {
+    setSelectedId((selectedId) =>
+      movie.imdbID === selectedId ? null : movie.imdbID
+    );
+  }
+
+  function handleAddMovieToWatched(movie) {
+    handleSelecteMovie(movie);
+    if (
+      !watched.reduce(
+        (acc, m) => (m.imdbID === movie.imdbID ? true : acc),
+        false
+      )
+    )
+      setWatched((watched) => [...watched, movie]);
+    console.log(movie);
+  }
 
   useEffect(
     function () {
@@ -159,18 +177,26 @@ export default function App() {
               {!isLoading &&
                 !error &&
                 movies?.map((movie) => (
-                  <MovieReleaseCard key={movie.imdbID} movie={movie} />
+                  <MovieReleaseCard
+                    key={movie.imdbID}
+                    movie={movie}
+                    handleAddMovieToWatchedF={handleAddMovieToWatched}
+                  />
                 ))}
             </>
           }
         />
-        <Box
-          itemList={watched.map((movie) => (
-            <MoviewReviewCard key={movie.imdbID} movie={movie} />
-          ))}
-        >
-          <WatchedSummary watched={watched} />
-        </Box>
+        {selectedId ? (
+          <SelectedMovie selectedId={selectedId} />
+        ) : (
+          <Box
+            itemList={watched.map((movie) => (
+              <MoviewReviewCard key={movie.imdbID} movie={movie} />
+            ))}
+          >
+            <WatchedSummary watched={watched} />
+          </Box>
+        )}
       </Main>
     </>
   );
@@ -210,9 +236,67 @@ function WatchedSummary({ watched }) {
   );
 }
 
-function MovieReleaseCard({ movie }) {
+function SelectedMovie({ selectedId }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorLoading, setErrorLoading] = useState(false);
+  const [movie, setMovie] = useState(null);
+  useEffect(
+    function () {
+      async function fetchMovie() {
+        setIsLoading(true);
+        setErrorLoading(false);
+        try {
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+          );
+          if (!res.ok) {
+            console.log(res);
+            throw new Error("Something went wrong while fetching movies");
+          }
+
+          const data = await res.json();
+          if (data.Response === "False") throw new Error("Movie Not Found");
+          setMovie(data);
+          console.log(data);
+        } catch (err) {
+          console.log(err);
+          setErrorLoading(true);
+        }
+        setIsLoading(false);
+      }
+      fetchMovie();
+    },
+    [selectedId]
+  );
+
   return (
-    <li key={movie.imdbID}>
+    <Box>
+      {isLoading ? (
+        <p>...</p>
+      ) : (
+        movie &&
+        !errorLoading && (
+          <div className="details">
+            <div className="header">
+              <img src={movie.Poster} alt={`${movie.Title} poster`} />
+              <div className="details-overview">
+                <h2>{movie.Title}</h2>
+                <p>
+                  <span>🗓</span>
+                  <span>{movie.Year}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      )}
+    </Box>
+  );
+}
+
+function MovieReleaseCard({ movie, handleAddMovieToWatchedF }) {
+  return (
+    <li onClick={() => handleAddMovieToWatchedF(movie)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
