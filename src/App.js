@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const tempMovieData = [
   {
@@ -47,7 +47,7 @@ const tempWatchedData = [
   },
 ];
 
-const KEY = "f84fc31d";
+const KEY = "c5cfe913";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -99,12 +99,29 @@ function SearchBar() {
   );
 }
 
+function Loader() {
+  return <p className="loader">Loading...</p>;
+}
+
 export default function App() {
-  const [movies, setMovies] = useState(tempMovieData);
+  const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(tempWatchedData);
-  fetch(`http://www.omdbapi.com/?apikey=${KEY}&s="Barry Lyndon"`).then((res) =>
-    res.json().then((data) => console.log(data))
-  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  const query = "Barry";
+  useEffect(function () {
+    setIsLoading(true);
+    async function fetchMovies() {
+      const res = await fetch(
+        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+      );
+      const data = await res.json();
+      setMovies(data.Search ?? []);
+      setIsLoading(false);
+    }
+    fetchMovies();
+  }, []);
+
   return (
     <>
       <NavBar>
@@ -114,9 +131,15 @@ export default function App() {
       </NavBar>
       <Main>
         <Box
-          itemList={movies?.map((movie) => (
-            <MovieReleaseCard key={movie.imdbID} movie={movie} />
-          ))}
+          itemList={
+            isLoading ? (
+              <Loader />
+            ) : (
+              movies?.map((movie) => (
+                <MovieReleaseCard key={movie.imdbID} movie={movie} />
+              ))
+            )
+          }
         />
         <Box
           itemList={watched.map((movie) => (
