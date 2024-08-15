@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import StarRating from "./StarRating";
 
 const tempMovieData = [
   {
@@ -52,7 +53,7 @@ const KEY = "c5cfe913";
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
-function Box({ itemList, children }) {
+function Box({ truncatedChildren, children }) {
   const [isOpen, setIsOpen] = useState(true);
   return (
     <div className="box">
@@ -60,7 +61,7 @@ function Box({ itemList, children }) {
         {isOpen ? "–" : "+"}
       </button>
       {children}
-      {isOpen && <ul className="list">{itemList}</ul>}
+      {isOpen && truncatedChildren}
     </div>
   );
 }
@@ -121,14 +122,24 @@ export default function App() {
   }
 
   function handleAddMovieToWatched(movie) {
-    handleSelecteMovie(movie);
     if (
       !watched.reduce(
         (acc, m) => (m.imdbID === movie.imdbID ? true : acc),
         false
       )
-    )
+    ) {
       setWatched((watched) => [...watched, movie]);
+    } else {
+      setWatched((watched) =>
+        movie.userRating
+          ? watched.map((m) =>
+              m.imdbID === movie.imdbID
+                ? { ...m, userRating: movie.userRating }
+                : m
+            )
+          : watched.filter((m) => m.imdbID !== movie.imdbID)
+      );
+    }
     console.log(movie);
   }
 
@@ -170,8 +181,8 @@ export default function App() {
       </NavBar>
       <Main>
         <Box
-          itemList={
-            <>
+          truncatedChildren={
+            <ul className="list">
               {isLoading && <Loader />}
               {error && <ErrorMessage message={error} />}
               {!isLoading &&
@@ -180,19 +191,27 @@ export default function App() {
                   <MovieReleaseCard
                     key={movie.imdbID}
                     movie={movie}
-                    handleAddMovieToWatchedF={handleAddMovieToWatched}
+                    handleSelecteMovieF={handleSelecteMovie}
                   />
                 ))}
-            </>
+            </ul>
           }
         />
         {selectedId ? (
-          <SelectedMovie selectedId={selectedId} />
+          <SelectedMovie
+            selectedId={selectedId}
+            handleSelecteMovieF={handleSelecteMovie}
+            handleAddMovieToWatchedF={handleAddMovieToWatched}
+          />
         ) : (
           <Box
-            itemList={watched.map((movie) => (
-              <MoviewReviewCard key={movie.imdbID} movie={movie} />
-            ))}
+            truncatedChildren={
+              <ul className="list">
+                {watched.map((movie) => (
+                  <MoviewReviewCard key={movie.imdbID} movie={movie} />
+                ))}
+              </ul>
+            }
           >
             <WatchedSummary watched={watched} />
           </Box>
@@ -236,10 +255,30 @@ function WatchedSummary({ watched }) {
   );
 }
 
-function SelectedMovie({ selectedId }) {
+function SelectedMovie({
+  selectedId,
+  handleSelecteMovieF,
+  handleAddMovieToWatchedF,
+}) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorLoading, setErrorLoading] = useState(false);
-  const [movie, setMovie] = useState(null);
+  const [movie, setMovie] = useState({});
+  const [selfRating, setSelfRating] = useState(null);
+
+  function handleRateMovie(rating) {
+    setSelfRating((selfRating) => (rating === selfRating ? null : rating));
+    const ratedMovie = {
+      imdbID: movie.imdbID,
+      Title: movie.Title,
+      Year: movie.Year,
+      Poster: movie.Poster,
+      runtime: movie.Runtime,
+      imdbRating: movie.imdbRating,
+      userRating: rating,
+    };
+    handleAddMovieToWatchedF(ratedMovie);
+  }
+
   useEffect(
     function () {
       async function fetchMovie() {
@@ -270,23 +309,53 @@ function SelectedMovie({ selectedId }) {
   );
 
   return (
-    <Box>
+    <Box
+      truncatedChildren={
+        isLoading ? (
+          <Loader />
+        ) : (
+          <div className="details">
+            <section>
+              <div className="rating">
+                <StarRating maxRating={10} onSetRating={handleRateMovie} />
+              </div>
+              <p>
+                <em>{movie.Plot}</em>
+              </p>
+              <p>Actors {movie.Actors}</p>
+              <p>Directed by {movie.Director}</p>
+              <p>Written by {movie.Writer}</p>
+            </section>
+          </div>
+        )
+      }
+    >
+      <button
+        className="btn-back"
+        onClick={() => handleSelecteMovieF(selectedId)}
+      >
+        &larr;
+      </button>
       {isLoading ? (
-        <p>...</p>
+        <></>
       ) : (
         movie &&
         !errorLoading && (
           <div className="details">
-            <div className="header">
+            <header>
               <img src={movie.Poster} alt={`${movie.Title} poster`} />
               <div className="details-overview">
                 <h2>{movie.Title}</h2>
                 <p>
-                  <span>🗓</span>
-                  <span>{movie.Year}</span>
+                  {movie.Released} &bull; {movie.Runtime}
                 </p>
+                <p>{movie.Genre}</p>
+                <p>
+                  <span>⭐ {movie.imdbRating} IMDb Rating</span>
+                </p>
+                <p>🌟{selfRating}</p>
               </div>
-            </div>
+            </header>
           </div>
         )
       )}
@@ -294,9 +363,9 @@ function SelectedMovie({ selectedId }) {
   );
 }
 
-function MovieReleaseCard({ movie, handleAddMovieToWatchedF }) {
+function MovieReleaseCard({ movie, handleSelecteMovieF }) {
   return (
-    <li onClick={() => handleAddMovieToWatchedF(movie)}>
+    <li onClick={() => handleSelecteMovieF(movie)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>

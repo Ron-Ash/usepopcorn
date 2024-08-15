@@ -48,8 +48,13 @@ export default function StarRating({
             style={starStyle}
             key={i + 1}
             onClick={() => {
-              setRating(rating === i + 1 ? defaultRating : i + 1);
-              onSetRating(rating);
+              if (rating === i + 1) {
+                setRating(defaultRating);
+                onSetRating(defaultRating);
+              } else {
+                setRating(i + 1);
+                onSetRating(i + 1);
+              }
             }}
             onMouseEnter={() => setTemRating(i + 1)}
             onMouseLeave={() => setTemRating(rating)}
