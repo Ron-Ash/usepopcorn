@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
+import { useFetch } from "./useFetch";
 
 const tempMovieData = [
   {
@@ -127,15 +128,16 @@ function ErrorMessage({ message }) {
 }
 
 export default function App() {
-  const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(function () {
     return JSON.parse(localStorage.getItem("watched")) ?? [];
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIdSelfRating, setSelectedIdSelfRating] = useState(null);
+  const { isLoading, errorLoading, database } = useFetch(
+    `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+  );
+  const movies = database;
 
   function handleSelecteMovie(movie) {
     setSelectedIdSelfRating(
@@ -176,39 +178,6 @@ export default function App() {
 
   useEffect(
     function () {
-      const controller = new AbortController();
-      async function fetchMovies() {
-        setIsLoading(true);
-        setMovies([]);
-        setError(null);
-        try {
-          const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-            { signal: controller.signal }
-          );
-          if (!res.ok) {
-            throw new Error("Something went wrong while fetching movies");
-          }
-
-          const data = await res.json();
-          if (data.Response === "False") throw new Error("Movie Not Found");
-          setMovies(data.Search ?? []);
-          setError(null);
-        } catch (err) {
-          if (err.name !== "Abort") setError(err.message);
-        }
-        setIsLoading(false);
-      }
-      fetchMovies();
-      return function () {
-        controller.abort();
-      };
-    },
-    [query]
-  );
-
-  useEffect(
-    function () {
       localStorage.setItem("watched", JSON.stringify(watched));
     },
     [watched]
@@ -226,9 +195,9 @@ export default function App() {
           truncatedChildren={
             <ul className="list">
               {isLoading && <Loader />}
-              {error && <ErrorMessage message={error} />}
+              {errorLoading && <ErrorMessage message={errorLoading} />}
               {!isLoading &&
-                !error &&
+                !errorLoading &&
                 movies?.map((movie) => (
                   <MovieReleaseCard
                     key={movie.imdbID}
