@@ -112,7 +112,7 @@ export default function App() {
   const [watched, setWatched] = useState(tempWatchedData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [query, setQuery] = useState("interstellar");
+  const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIdSelfRating, setSelectedIdSelfRating] = useState(null);
 
@@ -147,7 +147,6 @@ export default function App() {
           : watched.filter((m) => m.imdbID !== movie.imdbID)
       );
     }
-    console.log(movie);
   }
 
   function handleRemoveMovieToWatched(movie) {
@@ -167,7 +166,6 @@ export default function App() {
             { signal: controller.signal }
           );
           if (!res.ok) {
-            console.log(res);
             throw new Error("Something went wrong while fetching movies");
           }
 
@@ -176,7 +174,6 @@ export default function App() {
           setMovies(data.Search ?? []);
           setError(null);
         } catch (err) {
-          console.log(err);
           if (err.name !== "Abort") setError(err.message);
         }
         setIsLoading(false);
@@ -312,16 +309,13 @@ function SelectedMovie({
             `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
           );
           if (!res.ok) {
-            console.log(res);
             throw new Error("Something went wrong while fetching movies");
           }
 
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie Not Found");
           setMovie(data);
-          console.log(data);
         } catch (err) {
-          console.log(err);
           setErrorLoading(true);
         }
         setIsLoading(false);
@@ -346,7 +340,6 @@ function SelectedMovie({
       function callback(e) {
         if (e.code === "Escape") {
           handleSelecteMovieF(selectedId);
-          console.log("closing");
         }
       }
       document.addEventListener("keydown", callback);
