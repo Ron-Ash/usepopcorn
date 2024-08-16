@@ -2,14 +2,14 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import StarRating from "./StarRating";
-import TextExpander from "./TextExpander";
+// import StarRating from "./StarRating";
+// import TextExpander from "./TextExpander";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <App />
-    <StarRating maxRating={10}></StarRating>
+    {/* <StarRating maxRating={10}></StarRating>
     <StarRating
       messages={["horrible", "bad", "ok", "good", "great"]}
       defaultRating={3}
@@ -24,6 +24,6 @@ root.render(
       Sulla, Pompey, and Caesar. Through detailed depictions of battles,
       political maneuvering, and personal ambitions, the series provides a vivid
       portrait of Rome's transformation from a republic to an empire.
-    </TextExpander>
+    </TextExpander> */}
   </React.StrictMode>
 );
