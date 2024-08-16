@@ -154,14 +154,6 @@ export default function App() {
     setWatched((watched) => watched.filter((m) => m.imdbID !== movie.imdbID));
   }
 
-  useEffect(function () {
-    document.addEventListener("keydown", function (e) {
-      if (e.code === "Escape") {
-        setSelectedId(selectedId);
-      }
-    });
-  }, []);
-
   useEffect(
     function () {
       const controller = new AbortController();
@@ -347,6 +339,17 @@ function SelectedMovie({
       };
     },
     [movie]
+  );
+
+  useEffect(
+    function () {
+      document.addEventListener("keydown", function (e) {
+        if (e.code === "Escape") {
+          handleSelecteMovieF(selectedId);
+        }
+      });
+    },
+    [handleSelecteMovieF, selectedId]
   );
 
   return (
