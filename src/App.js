@@ -343,11 +343,17 @@ function SelectedMovie({
 
   useEffect(
     function () {
-      document.addEventListener("keydown", function (e) {
+      function callback(e) {
         if (e.code === "Escape") {
           handleSelecteMovieF(selectedId);
+          console.log("closing");
         }
-      });
+      }
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
     },
     [handleSelecteMovieF, selectedId]
   );
