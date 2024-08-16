@@ -325,6 +325,16 @@ function SelectedMovie({
     [selectedId]
   );
 
+  useEffect(
+    function () {
+      document.title = (movie && `Movie | ${movie.Title}`) ?? "UsePopcorn";
+      return function () {
+        document.title = "UsePopcorn";
+      };
+    },
+    [movie]
+  );
+
   return (
     <Box
       truncatedChildren={
