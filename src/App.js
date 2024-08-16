@@ -114,8 +114,15 @@ export default function App() {
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("interstellar");
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedIdSelfRating, setSelectedIdSelfRating] = useState(null);
 
   function handleSelecteMovie(movie) {
+    setSelectedIdSelfRating(
+      watched.reduce(
+        (acc, m) => (m.imdbID === movie.imdbID ? m.userRating : acc),
+        null
+      )
+    );
     setSelectedId((selectedId) =>
       movie.imdbID === selectedId ? null : movie.imdbID
     );
@@ -141,6 +148,10 @@ export default function App() {
       );
     }
     console.log(movie);
+  }
+
+  function handleRemoveMovieToWatched(movie) {
+    setWatched((watched) => watched.filter((m) => m.imdbID !== movie.imdbID));
   }
 
   useEffect(
@@ -202,13 +213,18 @@ export default function App() {
             selectedId={selectedId}
             handleSelecteMovieF={handleSelecteMovie}
             handleAddMovieToWatchedF={handleAddMovieToWatched}
+            defaultRating={selectedIdSelfRating}
           />
         ) : (
           <Box
             truncatedChildren={
               <ul className="list">
                 {watched.map((movie) => (
-                  <MoviewReviewCard key={movie.imdbID} movie={movie} />
+                  <MoviewReviewCard
+                    key={movie.imdbID}
+                    movie={movie}
+                    handleRemoveMovieToWatchedF={handleRemoveMovieToWatched}
+                  />
                 ))}
               </ul>
             }
@@ -259,14 +275,14 @@ function SelectedMovie({
   selectedId,
   handleSelecteMovieF,
   handleAddMovieToWatchedF,
+  defaultRating = null,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorLoading, setErrorLoading] = useState(false);
   const [movie, setMovie] = useState({});
-  const [selfRating, setSelfRating] = useState(null);
+  const [selfRating, setSelfRating] = useState(defaultRating);
 
-  function handleRateMovie(rating) {
-    setSelfRating((selfRating) => (rating === selfRating ? null : rating));
+  function handleRateMovie() {
     const ratedMovie = {
       imdbID: movie.imdbID,
       Title: movie.Title,
@@ -274,9 +290,10 @@ function SelectedMovie({
       Poster: movie.Poster,
       runtime: movie.Runtime,
       imdbRating: movie.imdbRating,
-      userRating: rating,
+      userRating: selfRating,
     };
-    handleAddMovieToWatchedF(ratedMovie);
+    selfRating && handleAddMovieToWatchedF(ratedMovie);
+    handleSelecteMovieF(selectedId);
   }
 
   useEffect(
@@ -317,7 +334,16 @@ function SelectedMovie({
           <div className="details">
             <section>
               <div className="rating">
-                <StarRating maxRating={10} onSetRating={handleRateMovie} />
+                <StarRating
+                  maxRating={10}
+                  defaultRating={defaultRating}
+                  onSetRating={setSelfRating}
+                />
+                {selfRating !== defaultRating && (
+                  <button className="btn-add" onClick={handleRateMovie}>
+                    + Add to list
+                  </button>
+                )}
               </div>
               <p>
                 <em>{movie.Plot}</em>
@@ -353,7 +379,6 @@ function SelectedMovie({
                 <p>
                   <span>⭐ {movie.imdbRating} IMDb Rating</span>
                 </p>
-                <p>🌟{selfRating}</p>
               </div>
             </header>
           </div>
@@ -378,7 +403,7 @@ function MovieReleaseCard({ movie, handleSelecteMovieF }) {
   );
 }
 
-function MoviewReviewCard({ movie }) {
+function MoviewReviewCard({ movie, handleRemoveMovieToWatchedF }) {
   return (
     <li>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
@@ -396,6 +421,12 @@ function MoviewReviewCard({ movie }) {
           <span>⏳</span>
           <span>{movie.runtime} min</span>
         </p>
+        <button
+          className="btn-delete"
+          onClick={() => handleRemoveMovieToWatchedF(movie)}
+        >
+          &times;
+        </button>
       </div>
     </li>
   );
