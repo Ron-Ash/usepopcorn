@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
 
 const tempMovieData = [
@@ -88,6 +88,24 @@ function SearchStatistics({ movies }) {
 }
 
 function SearchBar({ query, setQueryF }) {
+  const refEl = useRef(null);
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (document.activeElement !== refEl.current && e.code === "Enter") {
+          refEl.current.focus();
+          setQueryF("");
+        }
+      }
+      document.addEventListener("keydown", callback);
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [setQueryF]
+  );
+
   return (
     <input
       className="search"
@@ -95,6 +113,7 @@ function SearchBar({ query, setQueryF }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQueryF(e.target.value)}
+      ref={refEl}
     />
   );
 }
