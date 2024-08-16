@@ -6,4 +6,5 @@ own solution as following the Udemy course The "Ultimate React Course 2024: Reac
 ## Run React App
 - clone repository
 - enter eat-n-split project
+- run `npm install` in terminal
 - run `npm start` in terminal
