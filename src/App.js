@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
 import { useFetch } from "./useFetch";
+import { useLocalStorageState } from "./useLocalStorageState";
 
 const tempMovieData = [
   {
@@ -128,9 +129,6 @@ function ErrorMessage({ message }) {
 }
 
 export default function App() {
-  const [watched, setWatched] = useState(function () {
-    return JSON.parse(localStorage.getItem("watched")) ?? [];
-  });
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIdSelfRating, setSelectedIdSelfRating] = useState(null);
@@ -138,6 +136,7 @@ export default function App() {
     `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
   );
   const movies = database;
+  const [watched, setWatched] = useLocalStorageState([], "watched");
 
   function handleSelecteMovie(movie) {
     setSelectedIdSelfRating(
@@ -175,13 +174,6 @@ export default function App() {
   function handleRemoveMovieToWatched(movie) {
     setWatched((watched) => watched.filter((m) => m.imdbID !== movie.imdbID));
   }
-
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
 
   return (
     <>
