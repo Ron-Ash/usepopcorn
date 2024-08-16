@@ -3,6 +3,8 @@ import StarRating from "./StarRating";
 import { useFetch } from "./useFetch";
 import { useLocalStorageState } from "./useLocalStorageState";
 
+import { useKey } from "./useKey";
+
 const tempMovieData = [
   {
     imdbID: "tt1375666",
@@ -92,21 +94,13 @@ function SearchStatistics({ movies }) {
 function SearchBar({ query, setQueryF }) {
   const refEl = useRef(null);
 
-  useEffect(
-    function () {
-      function callback(e) {
-        if (document.activeElement !== refEl.current && e.code === "Enter") {
-          refEl.current.focus();
-          setQueryF("");
-        }
-      }
-      document.addEventListener("keydown", callback);
-      return function () {
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [setQueryF]
-  );
+  function callback(e) {
+    if (document.activeElement !== refEl.current && e.code === "Enter") {
+      refEl.current.focus();
+      setQueryF("");
+    }
+  }
+  useKey("Enter", "keydown", callback, [setQueryF]);
 
   return (
     <input
@@ -324,21 +318,12 @@ function SelectedMovie({
     [movie]
   );
 
-  useEffect(
-    function () {
-      function callback(e) {
-        if (e.code === "Escape") {
-          handleSelecteMovieF(selectedId);
-        }
-      }
-      document.addEventListener("keydown", callback);
-
-      return function () {
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [handleSelecteMovieF, selectedId]
-  );
+  function callback(e) {
+    if (e.code === "Escape") {
+      handleSelecteMovieF(selectedId);
+    }
+  }
+  useKey("Escape", "keydown", callback, [handleSelecteMovieF, selectedId]);
 
   return (
     <Box
